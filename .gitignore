@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+
+# 虚拟环境
+.venv/
+
+# 模型权重与大数据文件（SPEC：不进普通 Git 历史）
+checkpoints/
+*.pt
+*.pth
+*.safetensors
+*.gguf
+data/raw/
+
+# 系统文件
+.DS_Store
