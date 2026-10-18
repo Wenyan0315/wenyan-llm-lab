@@ -13,7 +13,7 @@ torch.manual_seed(0)
 # 第 0 类：中心 (0,0) 附近；第 1 类：中心 (3,3) 附近。各 50 个点。
 n = 50
 class0 = torch.randn(n, 2)                                # [50, 2] 围绕 (0,0) 散布
-class1 = torch.randn(n, 2) + torch.tensor([3.0, 3.0])     # [50, 2] 围绕 (3,3) 散布
+class1 = torch.randn(n, 2) + torch.tensor([1.0, 1.0])     # [50, 2] 围绕 (3,3) 散布
 x = torch.cat([class0, class1])                           # [100, 2] 全部输入
 y = torch.cat([torch.zeros(n, dtype=torch.long),          # [100] 标准答案：
                torch.ones(n, dtype=torch.long)])          #   前 50 个是第 0 类，后 50 个是第 1 类

@@ -1,0 +1,13 @@
+# 环境元信息（包版本锁见 ../requirements.txt）
+name: wenyan-llm-lab
+created: 2026-10-18
+python: "3.14.7"
+platform: "macOS / Apple M4 Pro / 48 GiB unified memory"
+accelerator: "Apple GPU via MPS (available: true)"
+key_packages:
+  - torch==2.14.1
+  - numpy==2.5.4
+recreate: "python3 -m venv .venv && .venv/bin/pip install -r ../requirements.txt"
+notes: >
+  Apple 统一内存不能等同 CUDA 显存；CUDA 专属方案（部分量化 kernel、
+  vLLM 训练组件）不默认在 MPS 可用，涉及 M10 时按 SPEC 集中到 Linux GPU。

@@ -1,6 +1,6 @@
 # Wenyan LLM Lab：学习状态
 
-更新时间：2026-10-18（Lesson 02 结束后）
+更新时间：2026-10-18（Lesson 03 结束，M0 done）
 
 ## 资源与环境（M0 已确认）
 
@@ -8,17 +8,16 @@
 |---|---|
 | Python | 3.14.7（系统框架版） |
 | PyTorch | 2.14.1（wenyan-llm-lab/.venv，MPS available: True） |
-| 依赖 | 尚未锁版本；numpy 未装（torch 有无害 warning），M0 收尾时补装并生成 requirements |
+| 依赖 | 已锁定：requirements.txt（torch 2.14.1、numpy 2.5.4 及传递依赖） |
 | 磁盘 | 460Gi 总量，349Gi 可用 |
 | 内存 | 51,539,607,552 bytes ≈ 48 GiB |
 | 云预算 | 未租用任何实例，本月本项目花费 0 元 |
 
 ## 当前状态
 
-- 当前里程碑：基础过渡 / M0，**in_progress**
-- 已完成：环境诊断、PyTorch/MPS smoke test、Lesson 01（tensor shape / 广播 / softmax / 交叉熵 / label shift 入门）、Lesson 02（autograd / 训练三步舞 / lr / 梯度累加）
-- 下一课：Lesson 03 — 训练小分类器（M0 学习者独立完成项：线性分类器 forward/backward/update 全链路）
-- M0 剩余：线性分类器、依赖锁定（numpy + requirements）、docs/baseline.md
+- 当前里程碑：M0 **done**（执行 done / 理解 assisted）；基础过渡剩过拟合实测（留 M3 正式验证）
+- 已完成：Lesson 01（shape/广播/softmax/CE）、Lesson 02（autograd/三步舞/lr/梯度累加）、Lesson 03（从零线性分类器 + 阅读验证 + 数据可分性实验）、M0 交付（docs/baseline.md、configs/environment.yaml、requirements.txt）
+- 下一课：M1 tokenizer 与数据（周末 1 剩余）——字符/BPE 编码、shifted labels 实做、split 规则
 - 运行中的任务：无
 
 ## 关键概念掌握表
@@ -37,8 +36,8 @@
 
 | 阶段 | 执行状态 | 理解状态 |
 |---|---|---|
-| 基础过渡 | in_progress（Lesson 01 done） | assisted |
-| M0 诊断与环境 | in_progress（环境 done，诊断题 done，线性分类器未做） | assisted |
+| 基础过渡 | in_progress（差过拟合实测，留 M3 验证） | assisted |
+| M0 诊断与环境 | done（2026-10-18） | assisted |
 | M1–M11 | not_started | unverified |
 
 ## 预算记录
@@ -65,3 +64,12 @@
 - 诚实记录：基准版在预测前已被本人运行过；预测 3 仍错（把基准"下降趋平"错搬到无 step 场景）——"学习只发生在 step"由此确立，预测证据按 assisted 记
 - 伏笔埋下：nan 排查（M3）、梯度累积=设计化的累加（M3）、过拟合=硬背不泛化（M3/M4）
 - 脚本：lessons/lesson02_autograd.py
+
+### Lesson 03（2026-10-18）：从零线性分类器（M0 收官）
+
+- 模式：AI 写实现 + 本人阅读验证（本人明确选择"你写我读"）
+- 阅读三题：Q1 shape [100,2] 独立答对（"广播=消耗"小误经纠正：广播是复制，矩阵乘才消耗维）；Q2 batch CE 未答出，经"y=一沓标准答案"讲解 + 等值验证（batch 1.373876 == 逐样本平均）补上；Q3 半对（step 命中，zero_ ↔ zero_grad 漏）
+- 实验 1（class1 中心 3,3→1.5,1.5）：acc 预测 0.85 vs 实际 0.83 命中；边界点预测"更犹疑"实际更笃定（0.69→0.82）——测试点恰成 class1 正中心，"骑不骑线"由数据分布决定而非点坐标
+- 核心教训：acc 天花板由数据可分性决定，不是训练步数（loss 卡 0.35 降不动）；M6 数据标注会遇到同款墙，解法在数据侧
+- 初始 loss 0.71 ≈ ln(2) 锚点建立：二分类随机基线
+- 脚本：lessons/lesson03_classifier.py
