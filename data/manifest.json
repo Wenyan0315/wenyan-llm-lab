@@ -1,0 +1,48 @@
+{
+  "dataset": "roneneldan/TinyStories",
+  "source_file": "TinyStories-valid.txt",
+  "source_url": "https://huggingface.co/datasets/roneneldan/TinyStories",
+  "download_mirror": "https://hf-mirror.com",
+  "license": "cdla-sharing-1.0",
+  "downloaded_at": "2026-10-20",
+  "why_this_corpus": "英文合成小故事，词表极小、句法简单，适合先验证语言建模链路；第一段不以中文能力验收",
+  "why_valid_not_train": "官方 train 1.92 GB 超出首个链路需要（1-5M tokens）；本文件 18.5 MB 足够，且划分由项目自己控制",
+  "raw": {
+    "bytes": 19447282,
+    "sha256": "94e431816c4cce81ff71e4408ff8d3bda9a42e8d2663986697c3954288cb38b4"
+  },
+  "documents": {
+    "total": 21990,
+    "train": 19791,
+    "val": 2199
+  },
+  "chars": {
+    "total": 19432979,
+    "train": 17190677,
+    "val": 1898988
+  },
+  "split_rule": "每篇故事为一个文档；按文档整体随机划分，val_ratio=0.1，seed=1234；先划分再切 chunk",
+  "duplicate_check": {
+    "train_internal_dups": 0,
+    "val_internal_dups": 0,
+    "train_val_exact_dups": 0
+  },
+  "outputs": {
+    "data/processed/train.txt": "29ba078e3a4be99cdd49ae08bbafe22a3526c98b0802da0e13a87e5876dff1f4",
+    "data/processed/val.txt": "706336c66c40b3ea696856486af4a0836d6f6213b3b001f38f8ec8e61b3fa72a"
+  },
+  "reproduce": ".venv/bin/python lessons/lesson09_corpus_split.py",
+  "tokenizer": {
+    "type": "byte-level BPE",
+    "library": "tokenizers",
+    "vocab_size": 8000,
+    "special_tokens": [
+      "<|endoftext|>"
+    ],
+    "trained_on": "data/processed/train.txt only（未使用 val 文本）",
+    "output": "data/tokenizer/bpe8k.json",
+    "train_tokens": 4131040,
+    "val_tokens": 457099,
+    "chars_per_token": 4.161
+  }
+}
