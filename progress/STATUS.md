@@ -1,6 +1,6 @@
 # Wenyan LLM Lab：学习状态
 
-更新时间：2026-10-19（Lesson 08 结束，M1 概念部分完成）
+更新时间：2026-10-31（Lesson 11 结束，M2 进行中：单头 attention 过三关）
 
 ## 资源与环境（M0 已确认）
 
@@ -15,9 +15,10 @@
 
 ## 当前状态
 
-- 当前里程碑：M0 **done**；M1 **概念部分完成**（Lesson 04–08），剩交付物（真实语料 + 成熟库 tokenizer + src/data/ + data/manifest.json）
-- 已完成：Lesson 01（shape/广播/softmax/CE）、Lesson 02（autograd/三步舞/lr/梯度累加）、Lesson 03（从零线性分类器 + 数据可分性）、M0 交付、Lesson 04–06（字符级 / byte-level / BPE）、Lesson 07（真实文本 shifted labels + chunk）、Lesson 08（split 规则与泄漏实验）
-- 下一课：M1 交付物——TinyStories 子集（记录许可证/版本/选择原因）、成熟库 tokenizer 只在 train 文本上训、src/data/ 与 data/manifest.json
+- 当前里程碑：M0 **done**；M1 **done**（2026-10-21，概念 + 数据 + tokenizer 全部落地）
+- 已完成：Lesson 01–03（M0）、Lesson 04–08（tokenizer / label shift / split 概念）、Lesson 09（TinyStories 按篇划分 + manifest）、Lesson 10（8K byte-level BPE，只在 train 上训）、Lesson 11（单头 attention：QKV / causal mask / 对照 SDPA 误差 5.96e-08）
+- 下一课：Lesson 12 多头 attention（为什么切 6 份而不是 384 维单头）→ decoder block → 整模型
+- 并行线：推理优化已移交独立窗口（docs/inference-handoff.md，状态写 progress/INFRA-STATUS.md，本线不重复教）
 - 运行中的任务：无
 
 ## 关键概念掌握表
@@ -26,11 +27,11 @@
 |---|---|---|---|
 | tensor shape 与广播 | assisted | Lesson 01 预测 z=[2,3,5]、m=[2,3,8] 全对 | 不看讲义解释 5 为何消失、3 为何保留 |
 | next-token 与 label shift | assisted | Lesson 01 切片 [:-1]/[1:] 答对；Lesson 07 用「输入没尾巴、预测没头」独立说清 x/y 各少一个；V=词表大小、块硬切不看词边界由 agent 讲解 | 给一条 5 token 句子写 x/y 并说出 logits 的 V 是多少 |
-| tokenizer（字符 / 字节 / BPE） | assisted 偏 independent | Lesson 04 暴露"按词切"直觉（22 字符猜成 6）；Lesson 06 预测 2/3 命中（第 1 轮 lo、lowkey 不崩）；Lesson 07 块吃 13 出 12 已理解 | 不给代码解释"BPE 为何既不 OOV 又能压短序列"、规则表顺序为何重要 |
+| tokenizer（字符 / 字节 / BPE） | assisted 偏 independent | Lesson 04 暴露"按词切"直觉（22 字符猜成 6）；Lesson 06 预测 2/3 命中（第 1 轮 lo、lowkey 不崩）；Lesson 10 预测命中「中文不崩」，但压缩比与 EOS 单 token 未知；实测 4.16 字符/token、中文 3 token/字、EOS=1 token | 解释"为什么中文在这个英文词表里压不动"与"EOS 必须是单 token" |
 | 数据划分与泄漏 | assisted | Lesson 08：A/B 对比实验（8 字片段重叠 4 vs 0）；Q1 答出症状（跨文档）未答出根因（块边界只数长度）；Q2「重叠 0 = 无泄漏」答错，经转述/短短语/同源三反例纠正 | 判断一个"先切后分"的划分会不会泄漏，并说出检测器的盲区 |
 | softmax 与交叉熵 | assisted 偏 independent | Q2（稀释机制）独立答对；Q1 方向对、数值锚点（loss 地板=0）刚补 | 换 target 后预测 loss 变化 |
 | 梯度与参数更新 | assisted | Q1 独立答对（无 step 则参数不动、loss 恒定）；Q2 预测发散命中（lr=2.0 实测 17→1.6e25→inf→nan）；Q3 梯度累加经对照实验讲解 | 用自己的话解释 zero_grad 位置与梯度累积的关系 |
-| attention 与 causal mask | unverified | — | — |
+| attention 与 causal mask | assisted | Lesson 11：scores[i][j]=i 对 j 的注意力、softmax 沿行归一化均独立答对；因果题初卡（"不知道咋办"）经 mask 表单步引导后答对（第 0 行看不见 j=4）；无遮罩泄漏题命中（实测前 4 位置 0.0 vs 0.599~0.648） | scale=1/√d 的作用；多头为什么是 6 份不是 1 份 |
 | SFT loss mask | unverified | — | — |
 | LoRA / DPO / GRPO / KV Cache / 量化 | unverified | — | — |
 
@@ -40,7 +41,7 @@
 |---|---|---|
 | 基础过渡 | in_progress（差过拟合实测，留 M3 验证） | assisted |
 | M0 诊断与环境 | done（2026-10-18） | assisted |
-| M1–M11 | not_started | unverified |
+| M1 tokenizer 与数据 | done（2026-10-21） | assisted |
 
 ## 预算记录
 
@@ -134,3 +135,38 @@
 - 状态：assisted（新概念，Q1 半对、Q2 答错已讲解）
 - M1 剩余交付物：TinyStories 子集（记许可证/版本/选择原因）+ 成熟库 tokenizer（仅 train 训）+ src/data/ + data/manifest.json
 - 脚本：lessons/lesson08_split_leakage.py
+
+### Lesson 09（2026-10-21）：真实语料按篇划分 + 数据清单
+
+- 语料：TinyStories-valid.txt（19.4 MB，许可证 cdla-sharing-1.0，经 hf-mirror 下载；官方 train 1.92 GB 超出首个链路需要）
+- 结果：按 `<|endoftext|>` 切出 **21,990 篇**；按篇随机 90/10 → train 19,791 篇（17.5 MB）/ val 2,199 篇（1.9 MB）
+- 重复检测：train 内部 0 / val 内部 0 / train∩val 逐字相同 0
+- ★ 教学失误（本人明确反馈"完全没 get 到这一课讲啥"）：agent 先跑代码再解释、把 manifest/哈希/许可证等工程细节当教学内容，未先建立"本课 = 把 Lesson 08 做法 B 用在真数据上"的全景。已按 Lesson 08 做法 A/B 对比重讲一遍
+- 重讲后两题：Q1「按篇划分为何不被劈」、Q2「0 证明什么、没证明什么」均未作答（本人回"继续"），按 assisted 记，不升级
+- 交付：data/processed/train.txt、val.txt、data/manifest.json；.gitignore 增加 data/processed/
+- 脚本：lessons/lesson09_corpus_split.py
+
+### Lesson 10（2026-10-21）：在 train 上训 8K byte-level BPE（M1 收官）
+
+- 配置：tokenizers 0.23.3；BPE + ByteLevel 预分词；vocab 8000；special_tokens=[`<|endoftext|>`]；initial_alphabet = 全部 256 字节；**只喂 train_docs**
+- 训练耗时 0.6 秒；词表 8000（1 special + 256 字节 + 7743 merges）
+- 预测：Q1 压缩比「不知道」；Q2「中文不会崩」**命中**；Q3 EOS token 数未答出
+- 实测：英文 86 字符 → 21 token，**4.16 字符/token**；train 全量 4,131,040 tokens、val 457,099 tokens（正好落在 SPEC 首轮 1–5M token 档位）
+- ★ 关键洞察：中文"猫坐在垫子上，看着窗外的雨。"14 字 → **42 token**（恰好 3 token/字 = UTF-8 3 字节）。永不 OOV 的保证还在，但 BPE 的压缩红利完全不跨语言——英文语料训出的 merges 对中文无效，退化到纯字节
+- 细节观察：byte-level BPE 把空格黏在**后一个**词上（' upon'、' little'），生成时模型会连着空格一起输出
+- EOS：`<|endoftext|>` → [0]，单 token；若不设 special token 会被拆成多个字节块，结束就变成一个"连续猜对好几次"的问题
+- 交付：data/tokenizer/bpe8k.json；data/manifest.json 追加 tokenizer 段
+- 状态：assisted（预测 1/3 命中；两个未答出的点已讲解）
+- 脚本：lessons/lesson10_train_bpe.py
+
+### Lesson 11（2026-10-22）：单头 attention（M2 第一块积木）
+
+- 内容：Q/K/V 三投影、`q @ k^T` 得 [B,T,T]、scale=1/√d、`triu(diagonal=1)` 因果 mask、softmax 行归一化、`weights @ v`
+- 代码：src/tiny_model/attention.py（head_dim=8 小配置，对照 torch.nn.functional.scaled_dot_product_attention）
+- 阅读题：Q1「scores[i][j] = i 对 j 的注意力」、Q2「softmax 必须沿行归一化」均独立答对
+- 实测：第 0 行权重必为 [1,0,0,0,0]（只看得见自己）；与 PyTorch SDPA 最大误差 **5.96e-08**（float32 精度量级 = M2 数值关容差基准）
+- 因果性实验：改第 4 个 token → 因果模式前 4 位置变化 **0.0**（精确为零：masked_fill(-inf) → softmax → 乘 0，一路消失）；无遮罩全部变化 [0.599, 0.580, 0.648, 0.329, 0.598] = 未来信息泄漏
+- 关联：label shift 是数据侧防线、causal mask 是模型侧防线，破一边训练就变成作弊；M4 response-only loss mask、M9 KV Cache 均由此延伸
+- ★ 教学事故（第 2 次同类）：预测题在脚本运行后提出、答案已泄露；弃用预测改 mask 表解释题后本人答对。规矩固化：**预测题必须先于运行**
+- 状态：assisted（两个核心解释题独立答对、泄漏题命中；scale 作用与多头动机待验证）
+- 代码：src/tiny_model/attention.py
